@@ -2,71 +2,59 @@ package internal
 
 import (
 	"database/sql"
-	"fmt"
+	"sync"
+
+	"github.com/labstack/echo/v4"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
 	CustomerTable  = "customers"
 	CustomerSchema = `
-		CREATE IF NOT EXISTS TABLE customers (
+		CREATE TABLE IF NOT EXISTS customers (
 			id INT NOT NULL UNIQUE PRIMARY KEY,
 			first_name TEXT NOT NULL,
 			last_name TEXT NOT NULL
 		);
 	`
+	CreateCustomerSql = `
+		SELECT * FROM customers WHERE id=?;
+	`
 )
 
-type CustomerStore struct {
-	Db    *sql.DB
-	stmts map[string]sql.Stmt
+type CustomerStoreContext struct {
+	echo.Context
+	mu sync.Mutex
+	db *sql.DB
 }
 
-type CustomerId = int64
+func (sc *CustomerStoreContext) GetCustomerStmt() (*sql.Stmt, error) {
+	return sc.db.Prepare(CreateCustomerSql)
+}
 
-func NewCustomerStore(db *sql.DB) (*CustomerStore, error) {
-	_, err := db.Exec(CustomerSchema)
+func NewCustomerStoreContext(path string, c echo.Context) (*CustomerStoreContext, error) {
+	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
 	}
-	statements := map[string]string{
-		"createCustomer": fmt.Sprintf("INSERT INTO %s VALUES(NULL, ?, ?);", CustomerTable),
-	}
-
-	store := CustomerStore{Db: db, stmts: make(map[string]sql.Stmt)}
-
-	for k, v := range statements {
-		sqlStmt, err := db.Prepare(v)
-		if err != nil {
-			return nil, err
-		}
-		store.stmts[k] = *sqlStmt
-	}
-
-	return &store, nil
+	return &CustomerStoreContext{
+		Context: c,
+		db:      db,
+	}, nil
 }
 
-func (store *CustomerStore) CreateCustomer(data CustomerData) (*int64, error) {
-	query := store.stmts["createCustomer"]
-	res, err := query.Exec(data.FirstName, data.LastName)
-	if err != nil {
-		return nil, err
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
-
-	return &id, nil
+func (store *CustomerStoreContext) CreateCustomer(data CustomerData) (*int64, error) {
+	return nil, nil
 }
 
-func (store *CustomerStore) GetCustomer(id CustomerId) (*CustomerData, error) {
-	query := store.stmts["getCustomer"]
-	var (
-		skipId int64
-		data   CustomerData
-	)
-	err := query.
+func (store *CustomerStoreContext) GetCustomer(id int64) (*CustomerRecord, error) {
+	var rec CustomerRecord
+	stmt, err := store.GetCustomerStmt()
+	if err != nil {
+		return nil, nil
+	}
+	err = stmt.
 		QueryRow(id).
-		Scan(&skipId, &data.FirstName, &data.LastName)
-	return &data, err
+		Scan(&rec.Id, &rec.FirstName, &rec.LastName)
+	return &rec, err
 }
