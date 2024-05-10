@@ -12,12 +12,15 @@ const (
 	CustomerTable  = "customers"
 	CustomerSchema = `
 		CREATE TABLE IF NOT EXISTS customers (
-			id INT NOT NULL UNIQUE PRIMARY KEY,
+			id INTEGER NOT NULL UNIQUE PRIMARY KEY,
 			first_name TEXT NOT NULL,
 			last_name TEXT NOT NULL
 		);
 	`
 	CreateCustomerSql = `
+		INSERT INTO customers VALUES(NULL, ?, ?);
+	`
+	GetCustomerSql = `
 		SELECT * FROM customers WHERE id=?;
 	`
 )
@@ -28,8 +31,12 @@ type CustomerStoreContext struct {
 	db *sql.DB
 }
 
-func (sc *CustomerStoreContext) GetCustomerStmt() (*sql.Stmt, error) {
+func (sc *CustomerStoreContext) CreateCustomerStmt() (*sql.Stmt, error) {
 	return sc.db.Prepare(CreateCustomerSql)
+}
+
+func (sc *CustomerStoreContext) GetCustomerStmt() (*sql.Stmt, error) {
+	return sc.db.Prepare(GetCustomerSql)
 }
 
 func NewCustomerStoreContext(path string, c echo.Context) (*CustomerStoreContext, error) {
@@ -47,8 +54,20 @@ func NewCustomerStoreContext(path string, c echo.Context) (*CustomerStoreContext
 	}, nil
 }
 
-func (store *CustomerStoreContext) CreateCustomer(data CustomerData) (*int64, error) {
-	return nil, nil
+func (store *CustomerStoreContext) CreateCustomer(data CustomerData) (*CustomerRecord, error) {
+	stmt, err := store.CreateCustomerStmt()
+	if err != nil {
+		return nil, err
+	}
+	res, err := stmt.Exec(data.FirstName, data.LastName)
+	if err != nil {
+		return nil, err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	return &CustomerRecord{Id: id, CustomerData: data}, nil
 }
 
 func (store *CustomerStoreContext) GetCustomer(id int64) (*CustomerRecord, error) {

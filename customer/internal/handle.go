@@ -15,12 +15,13 @@ func CreateCustomerHandler(c echo.Context) error {
 	if err := c.Bind(&data); err != nil {
 		return c.String(http.StatusBadRequest, err.Error())
 	}
-	id, err := store.CreateCustomer(data)
+	rec, err := store.CreateCustomer(data)
 	if err != nil {
+		log.Error(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusAccepted, map[string]any{
-		"id": id,
+		"data": rec,
 	})
 }
 
