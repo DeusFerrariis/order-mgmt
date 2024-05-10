@@ -37,6 +37,10 @@ func NewCustomerStoreContext(path string, c echo.Context) (*CustomerStoreContext
 	if err != nil {
 		return nil, err
 	}
+	_, err = db.Exec(CustomerSchema)
+	if err != nil {
+		return nil, err
+	}
 	return &CustomerStoreContext{
 		Context: c,
 		db:      db,
