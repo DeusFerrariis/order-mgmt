@@ -1,17 +1,12 @@
-module github.com/DeusFerrariis/order-mgmt
+module github.com/DeusFerrariis/order-mgmt/order
 
 go 1.22.2
 
 require (
-	github.com/DeusFerrariis/order-mgmt/customer v0.0.0-20240509012506-65dba7791517
-	github.com/DeusFerrariis/order-mgmt/order v0.0.0-00010101000000-000000000000
 	github.com/charmbracelet/log v0.4.0
 	github.com/labstack/echo/v4 v4.12.0
+	github.com/mattn/go-sqlite3 v1.14.22
 )
-
-replace github.com/DeusFerrariis/order-mgmt/customer => ./customer
-
-replace github.com/DeusFerrariis/order-mgmt/order => ./order
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
@@ -22,7 +17,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
-	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
