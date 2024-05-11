@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"database/sql"
 	"net/http"
 	"strconv"
 
@@ -39,3 +40,21 @@ func CreateLineItemHandler(c echo.Context) error {
 	return c.JSON(http.StatusAccepted, map[string]any{"data": rec})
 }
 
+func (ctx *OrderStoreContext) CreateOrderStmt() (*sql.Stmt, error) {
+	return ctx.db.Prepare("INSERT INTO orders VALUES(NULL, ?);")
+}
+
+func (ctx *OrderStoreContext) CreateOrder(custId int64) (*OrderRecord, error) {
+	stmt, err := ctx.CreateOrderStmt()
+	if err != nil {
+		return nil, err
+	}
+	res, err := stmt.Exec(custId)
+	if err != nil {
+		return nil, err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+}
