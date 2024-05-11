@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/DeusFerrariis/order-mgmt/customer"
+	"github.com/DeusFerrariis/order-mgmt/order"
 	clog "github.com/charmbracelet/log"
 	"github.com/labstack/echo/v4"
 )
@@ -11,6 +12,9 @@ import (
 func main() {
 	e := echo.New()
 	if err := customer.AttachCustomerRoutes("orders.db", e); err != nil {
+		clog.Error(err)
+	}
+	if err := order.AttachOrderRoutes("orders.db", e); err != nil {
 		clog.Error(err)
 	}
 	log.Fatal(e.Start(":3001"))
