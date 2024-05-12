@@ -9,6 +9,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+func bCreateCustomerHandler(w http.ResponseWriter, r *http.Request) {
+	
+}
+
 func CreateCustomerHandler(c echo.Context) error {
 	store := c.(*CustomerStoreContext)
 	var data CustomerData
