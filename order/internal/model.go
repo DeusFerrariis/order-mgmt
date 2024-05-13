@@ -1,11 +1,5 @@
 package internal
 
-import (
-	"encoding/json"
-	"net/http"
-	"strconv"
-)
-
 type (
 	ItemData struct {
 		Sku         string `json:"sku"`
@@ -31,32 +25,6 @@ type (
 		CustomerId int64 `json:"customer_id"`
 	}
 )
-
-func (v *LineItemData) FromRequest(r *http.Request) error {
-	var body struct {
-		ItemData
-		ItemPricing
-		LineNumber int64 `json:"line_number"`
-		Quantity   int64 `json:"quantity"`
-	}
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil {
-		return err
-	}
-	orderIdStr := r.PathValue("orderId")
-	orderId, err := strconv.Atoi(orderIdStr)
-	if err != nil {
-		return err
-	}
-
-	v.ItemData = body.ItemData
-	v.ItemPricing = body.ItemPricing
-	v.LineNumber = body.LineNumber
-	v.Quantity = body.Quantity
-	v.OrderId = int64(orderId)
-
-	return nil
-}
 
 const (
 	OrderTable  = "orders"

@@ -6,7 +6,7 @@ require (
 	github.com/DeusFerrariis/order-mgmt/customer v0.0.0-00010101000000-000000000000
 	github.com/DeusFerrariis/order-mgmt/order v0.0.0-00010101000000-000000000000
 	github.com/charmbracelet/log v0.4.0
-	github.com/labstack/echo/v4 v4.12.0
+	github.com/labstack/echo/v4 v4.12.0 // indirect
 )
 
 replace github.com/DeusFerrariis/order-mgmt/customer => ./customer

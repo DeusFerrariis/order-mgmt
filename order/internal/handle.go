@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/DeusFerrariis/order-mgmt/handle"
-	"github.com/labstack/echo/v4"
 )
 
 type OrderController struct {
@@ -19,76 +18,48 @@ func (cr *OrderController) HCreateLineItem(c *handle.HandlerContext) error {
 		return err
 	}
 	var body struct {
-		ItemData
-		ItemPricing
-		Quantity int64 `json:"quantity"`
+		*ItemData
+		*ItemPricing
+		Quantity *int64 `json:"quantity"`
 	}
 	if err = c.BodyJson(&body); err != nil {
 		return c.LogErr(http.StatusUnprocessableEntity, err)
 	}
+	if body.ItemData == nil ||
+		body.ItemPricing == nil ||
+		body.Quantity == nil {
+		return c.String(http.StatusUnprocessableEntity, "missing required field")
+	}
 	lineItem := LineItemData{
-		body.ItemData,
-		body.ItemPricing,
+		*body.ItemData,
+		*body.ItemPricing,
 		0,
-		body.Quantity,
+		*body.Quantity,
 		int64(orderId),
 	}
 	store := cr.LineItemStore
 	rec, err := store.CreateLineItem(lineItem)
 	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
+		return err
 	}
 	// Return record
 	return c.JSON(http.StatusAccepted, map[string]any{"data": rec})
 }
 
-func CreateLineItemHandler(c echo.Context) error {
-	// Collect /{id}
-	orderIdParam := c.Param("orderId")
-	orderId, err := strconv.Atoi(orderIdParam)
+func (cr *OrderController) HGetLineItemById(c *handle.HandlerContext) error {
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return c.String(http.StatusBadRequest, "invalid order id")
+		return c.Stringf(http.StatusUnprocessableEntity, "Invalid id '%s'", c.Param("id"))
 	}
-	// Collect json body
-	var data struct {
-		ItemData
-		ItemPricing
-		Quantity int64 `json:"quantity"`
-	}
-	if err := c.Bind(&data); err != nil {
-		return c.NoContent(http.StatusBadRequest)
-	}
-	// Attempt create
-	s := c.(*LineItemStore)
-	rec, err := s.CreateLineItem(LineItemData{
-		data.ItemData,
-		data.ItemPricing,
-		0,
-		data.Quantity,
-		int64(orderId),
-	})
-	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	// Return record
-	return c.JSON(http.StatusAccepted, map[string]any{"data": rec})
-}
 
-func (ctx *OrderStore) CreateOrderStmt() (*sql.Stmt, error) {
-	return ctx.db.Prepare("INSERT INTO orders VALUES(NULL, ?);")
-}
+	store := cr.LineItemStore
+	rec, err := store.GetLineItemById(int64(id))
+	if err == sql.ErrNoRows {
+		return c.NoContent(http.StatusNotFound)
+	}
+	if err != nil {
+		return err
+	}
 
-func (ctx *OrderStore) CreateOrder(custId int64) (*OrderRecord, error) {
-	stmt, err := ctx.CreateOrderStmt()
-	if err != nil {
-		return nil, err
-	}
-	res, err := stmt.Exec(custId)
-	if err != nil {
-		return nil, err
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
+	return c.JSON(http.StatusOK, map[string]any{"data": rec})
 }

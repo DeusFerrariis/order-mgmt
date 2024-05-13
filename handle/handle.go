@@ -21,7 +21,9 @@ func (c *HandlerContext) String(status int, msg string) error {
 }
 
 func (c *HandlerContext) Stringf(status int, msg string, args ...any) error {
-	c.w.WriteHeader(status)
+	if status != http.StatusOK {
+		c.w.WriteHeader(status)
+	}
 	fmt.Fprintf(c.w, msg, args...)
 	return nil
 }
@@ -32,14 +34,18 @@ func (c *HandlerContext) NoContent(status int) error {
 }
 
 func (c *HandlerContext) LogErr(status int, err error) error {
-	c.w.WriteHeader(status)
+	if status != http.StatusOK {
+		c.w.WriteHeader(status)
+	}
 	log.Error(err)
 	return nil
 }
 
 func (c *HandlerContext) JSON(status int, v interface{}) error {
 	err := json.NewEncoder(c.w).Encode(v)
-	c.w.WriteHeader(status)
+	if status != http.StatusOK {
+		c.w.WriteHeader(status)
+	}
 	return err
 }
 
@@ -59,6 +65,7 @@ func HTTPHandlerFunc(h HandlerFunc) http.HandlerFunc {
 		err := h(&ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Error("Internal Server Error", "err", err)
 		}
 	}
 }

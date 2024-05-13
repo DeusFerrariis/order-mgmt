@@ -2,9 +2,9 @@ package internal
 
 import (
 	"database/sql"
+	"errors"
 	"sync"
 
-	"github.com/labstack/echo/v4"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -20,11 +20,32 @@ type (
 	}
 )
 
+const (
+	// id | sku | description | cost | price | line_number | quantity | order_id
+	LineItemTableSchema = `
+		CREATE TABLE IF NOT EXISTS lineItems (
+			id INTEGER UNIQUE NOT NULL PRIMARY KEY,
+			sku TEXT NOT NULL,
+			description TEXT NOT NULL,
+			cost INTEGER NOT NULL,
+			price INTEGER NOT NULL,
+			line_number INTEGER NOT NULL,
+			quantity INTEGER NOT NULL,
+			order_id INTEGER NOT NULL
+		);
+	`
+)
+
 func (store *LineItemStore) PrepareStatements() error {
+	store.stmts = make(map[string]*sql.Stmt)
 	stmt, err := store.db.Prepare(`
 		INSERT INTO lineItems VALUES(NULL, ?, ?, ?, ?, ?, ?, ?);
 	`)
 	store.stmts["createLineItem"] = stmt
+	stmt, err = store.db.Prepare(`
+		SELECT * FROM lineItems WHERE id=?;
+	`)
+	store.stmts["getLineItemById"] = stmt
 	return err
 }
 
@@ -44,25 +65,26 @@ func NewLineItemStore(path string) (LineItemStore, error) {
 	if err != nil {
 		return LineItemStore{}, err
 	}
-	// TODO: init schema for orders table
-	return LineItemStore{
+	_, err = db.Exec(LineItemSchema)
+	if err != nil {
+		return LineItemStore{}, err
+	}
+	store := LineItemStore{
 		db: db,
-	}, nil
-}
-
-func (ctx *LineItemStore) CreateLineItemStmt() (*sql.Stmt, error) {
-	return ctx.db.Prepare(`
-		INSERT INTO lineItems VALUES(NULL, ?, ?, ?, ?, ?, ?, ?);
-	`)
+	}
+	if err = store.PrepareStatements(); err != nil {
+		return LineItemStore{}, errors.Join(errors.New("Could not prepare statements:"), err)
+	}
+	return store, nil
 }
 
 func (ctx *LineItemStore) CreateLineItem(data LineItemData) (*LineItemRecord, error) {
-	stmt, err := ctx.CreateLineItemStmt()
-	if err != nil {
-		return nil, err
-	}
-	res, err := stmt.Exec(data.OrderId, data.LineNumber, data.Sku, data.Description,
-		data.Cost, data.Price, data.Quantity)
+	stmt := ctx.stmts["createLineItem"]
+	// id | sku | description | cost | price | line_number | quantity | order_id
+	res, err := stmt.Exec(
+		data.Sku, data.Description, data.Cost, data.Price, data.LineNumber,
+		data.Quantity, data.OrderId,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -71,4 +93,13 @@ func (ctx *LineItemStore) CreateLineItem(data LineItemData) (*LineItemRecord, er
 		return nil, err
 	}
 	return &LineItemRecord{Id: id, LineItemData: data}, err
+}
+
+func (ctx *LineItemStore) GetLineItemById(id int64) (*LineItemRecord, error) {
+	var r LineItemRecord
+	stmt := ctx.stmts["getLineItemById"].QueryRow(id)
+	err := stmt.
+		// id | sku | description | cost | price | line_number | quantity | order_id
+		Scan(&r.Id, &r.Sku, &r.Description, &r.Cost, &r.Price, &r.LineNumber, &r.Quantity, &r.OrderId)
+	return &r, err
 }
