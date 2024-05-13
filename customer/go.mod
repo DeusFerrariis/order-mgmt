@@ -8,6 +8,8 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.22
 )
 
+replace github.com/DeusFerrariis/order-mgmt/handle => ../handle
+
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v0.10.0 // indirect
