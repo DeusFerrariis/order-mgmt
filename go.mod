@@ -3,13 +3,13 @@ module github.com/DeusFerrariis/order-mgmt
 go 1.22.2
 
 require (
-	github.com/DeusFerrariis/order-mgmt/customer v0.0.0-20240509012506-65dba7791517
-	github.com/DeusFerrariis/order-mgmt/order v0.0.0-00010101000000-000000000000
 	github.com/charmbracelet/log v0.4.0
 	github.com/labstack/echo/v4 v4.12.0
 )
 
 replace github.com/DeusFerrariis/order-mgmt/customer => ./customer
+
+replace github.com/DeusFerrariis/order-mgmt/handle => ./handle
 
 replace github.com/DeusFerrariis/order-mgmt/order => ./order
 
