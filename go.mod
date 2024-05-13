@@ -3,6 +3,8 @@ module github.com/DeusFerrariis/order-mgmt
 go 1.22.2
 
 require (
+	github.com/DeusFerrariis/order-mgmt/customer v0.0.0-00010101000000-000000000000
+	github.com/DeusFerrariis/order-mgmt/order v0.0.0-00010101000000-000000000000
 	github.com/charmbracelet/log v0.4.0
 	github.com/labstack/echo/v4 v4.12.0
 )
@@ -14,6 +16,7 @@ replace github.com/DeusFerrariis/order-mgmt/handle => ./handle
 replace github.com/DeusFerrariis/order-mgmt/order => ./order
 
 require (
+	github.com/DeusFerrariis/order-mgmt/handle v0.0.0-00010101000000-000000000000 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v0.10.0 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
